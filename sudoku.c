@@ -138,7 +138,7 @@ void le_matriz(char *file) {
 		}
 	} else {
 		for (l = 0; l < 9; l++) {
-			printf("linha %d:", l);
+			printf("linha %d:", l + 1);
 			scanf("%s", lmat[l]);
 		}
 	}
