@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 
+char *file = NULL;
+
 int arrependimentos = 0;
 int tentativas = 0;
 
@@ -152,9 +154,8 @@ void le_matriz(char *file) {
 		free(buf);
 }
 
-int main(int argc, char **argv) {
-	char op;
-	char *file = NULL;
+void parseArgs(int argc, char **argv) {
+  char op;
 
 	while ((op = getopt(argc, argv, "df:")) != -1) {
 		switch (op) {
@@ -168,10 +169,78 @@ int main(int argc, char **argv) {
 				printf("Unknown option\n");
 		}
 	}
+}
+// matriz de ponteiros
+// [quad][val] = endereço para o valor no quadrante
+int ***quad_vals;
+// [coluna][val] = endereço para o valor na coluna
+int ***coluna_vals;
+// [linha][val] = endereço para o valor na linha
+int ***linha_vals;
+
+int consegue_me_botar_nesse_quadrante(int v, int q, int quad_size) {
+	int c1, l1;
+	int i, j;
+
+  if (quad_vals[q][v] != NULL)
+    return 0;
+
+	// Pedala robinho
+	c1 = (q - 1) * quad_size;
+	l1 = (q - 1) * quad_size;
+
+	for (i = l1; i < l1 + quad_size; i++) {
+    if (linha_vals[i][v] != NULL)
+      continue;
+		for (j = c1; j < c1 + quad_size; j++) {
+      if (coluna_vals[j][v] != NULL)
+        continue;
+      if (mat[i][j] == 0) {
+        mat[i][j] = v;
+        quad_vals[q][v] = &mat[i][j];
+	      return 1;
+      }
+    }
+  }
+
+	return 0;
+}
+
+int solve(char **matr, int quad_size, int base) {
+  //valor, quadrante
+  int v, q;
+  int maxval = base - 1;
+
+  quad_vals = malloc(maxval * maxval * sizeof(int *));
+  linha_vals = malloc(maxval * maxval * sizeof(int *));
+  coluna_vals = malloc(maxval * maxval * sizeof(int *));
+
+  memset(quad_vals, 0, maxval * maxval * sizeof(int *));
+  memset(linha_vals, 0, maxval * maxval * sizeof(int *));
+  memset(coluna_vals, 0, maxval * maxval * sizeof(int *));
+
+  for (q = 1; q <= maxval; q++)
+    for (v = 1; v <= maxval; v++)
+      if (!consegue_me_botar_nesse_quadrante(v, q, quad_size))
+        return 0;
+  return 1;
+}
+
+int main(int argc, char **argv) {
+	char op;
+
+  parseArgs(argc, argv);
+
 
 	le_matriz(file);
 	dump_matriz();
 	printf("\n\n");
+
+  if(!solve(NULL, 3, 10))
+    printf("Fudeu negadis\n");
+  else
+    exit(127);
+
 	preenche(0, 0);
 	dump_matriz();
 
