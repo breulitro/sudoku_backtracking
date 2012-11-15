@@ -1,2 +1,2 @@
 all:
-	gcc sudoku.c
+	gcc sudoku.c -g

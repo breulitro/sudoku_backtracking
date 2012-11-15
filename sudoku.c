@@ -171,18 +171,19 @@ void parseArgs(int argc, char **argv) {
 	}
 }
 // matriz de ponteiros
-// [quad][val] = endereço para o valor no quadrante
-int ***quad_vals;
+// [quad/linha/coluna][val] => &mat[i][j] = val
+// [quad][val] =  endereço para o valor no quadrante
 // [coluna][val] = endereço para o valor na coluna
-int ***coluna_vals;
 // [linha][val] = endereço para o valor na linha
+int ***quad_vals;
+int ***coluna_vals;
 int ***linha_vals;
 
 int consegue_me_botar_nesse_quadrante(int v, int q, int quad_size) {
 	int c1, l1;
 	int i, j;
 
-  if (quad_vals[q][v] != NULL)
+  if (quad_vals[q][v - 1] != NULL)
     return 0;
 
 	// Pedala robinho
@@ -190,14 +191,16 @@ int consegue_me_botar_nesse_quadrante(int v, int q, int quad_size) {
 	l1 = (q - 1) * quad_size;
 
 	for (i = l1; i < l1 + quad_size; i++) {
-    if (linha_vals[i][v] != NULL)
+    if (linha_vals[i][v - 1] != NULL)
       continue;
 		for (j = c1; j < c1 + quad_size; j++) {
-      if (coluna_vals[j][v] != NULL)
+      if (coluna_vals[j][v - 1] != NULL)
         continue;
       if (mat[i][j] == 0) {
         mat[i][j] = v;
-        quad_vals[q][v] = &mat[i][j];
+        quad_vals[q - 1][v - 1] = &mat[i][j];
+        linha_vals[i][v - 1] = &mat[i][j];
+        coluna_vals[j][v - 1] = &mat[i][j];
 	      return 1;
       }
     }
@@ -211,18 +214,39 @@ int solve(char **matr, int quad_size, int base) {
   int v, q;
   int maxval = base - 1;
 
-  quad_vals = malloc(maxval * maxval * sizeof(int *));
-  linha_vals = malloc(maxval * maxval * sizeof(int *));
-  coluna_vals = malloc(maxval * maxval * sizeof(int *));
+  quad_vals = (int ***)malloc(maxval * sizeof(int **));
+  for (q = 0; q < maxval; q++) {
+    quad_vals[q] = (int **)malloc(maxval * sizeof(int *));
+    for (v = 0; v < maxval; v++)
+      quad_vals[q][v] = NULL;
+  }
 
-  memset(quad_vals, 0, maxval * maxval * sizeof(int *));
-  memset(linha_vals, 0, maxval * maxval * sizeof(int *));
-  memset(coluna_vals, 0, maxval * maxval * sizeof(int *));
+  linha_vals = (int ***)malloc(maxval * sizeof(int **));
+  for (q = 0; q < maxval; q++) {
+    linha_vals[q] = (int **)malloc(maxval * sizeof(int *));
+    for (v = 0; v < maxval; v++)
+      linha_vals[q][v] = NULL;
+  }
 
+  coluna_vals = (int ***)malloc(maxval * sizeof(int **));
+  for (q = 0; q < maxval; q++) {
+    coluna_vals[q] = (int **)malloc(maxval * sizeof(int *));
+    for (v = 0; v < maxval; v++)
+      coluna_vals[q][v] = NULL;
+  }
+  int i;
   for (q = 1; q <= maxval; q++)
     for (v = 1; v <= maxval; v++)
-      if (!consegue_me_botar_nesse_quadrante(v, q, quad_size))
+      if (!consegue_me_botar_nesse_quadrante(v, q, quad_size)) {
+        for (i = 0; i < maxval; i++) {
+          if (quad_vals[q - 1][i - 1] != NULL)
+            
+            // E agora eu não sei em que linha e coluna foi botado o valor prá
+            // desfazer e tentar botar o mesmo valor em outro quadrante...
+        }
+        linha_vals[q][v - 1] = NULL;
         return 0;
+      }
   return 1;
 }
 
@@ -234,13 +258,14 @@ int main(int argc, char **argv) {
 
 	le_matriz(file);
 	dump_matriz();
-	printf("\n\n");
+	printf("\n%d\n", mat[9][1]);
 
   if(!solve(NULL, 3, 10))
     printf("Fudeu negadis\n");
   else
-    exit(127);
+    exit(066);
 
+	printf("\n%d\n", mat[9][1]);
 	preenche(0, 0);
 	dump_matriz();
 
